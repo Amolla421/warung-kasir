@@ -115,9 +115,12 @@ exports.checkout = async (req, res) => {
 
         await connection.beginTransaction();
 
-        // Insert Transaksi
+        // Set timezone untuk connection ini
+        await connection.query("SET time_zone = '+07:00'");
+
+        // Insert Transaksi dengan waktu WIB
         const [transaksiResult] = await connection.query(
-            'INSERT INTO Transaksi (tanggal, total_harga, id_user) VALUES (CURDATE(), ?, ?)',
+            'INSERT INTO Transaksi (tanggal, total_harga, id_user, created_at) VALUES (CURDATE(), ?, ?, CONVERT_TZ(NOW(), @@session.time_zone, "+07:00"))',
             [totalHarga, req.session.user.id]
         );
 
