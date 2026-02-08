@@ -121,7 +121,7 @@
             <!-- Search Box -->
             <div class="search-section no-print">
                 <div class="search-box">
-                    <input type="text" id="searchInput" placeholder="🔍 Cari berdasarkan ID, Tanggal, Waktu, atau Total..." class="search-input">
+                    <input type="text" id="searchInput" placeholder="🔍 Cari berdasarkan ID, Tanggal, Waktu, Kasir, Metode, atau Total..." class="search-input">
                     <button id="clearSearch" class="btn-clear-search" style="display:none;">✕</button>
                 </div>
                 <p id="searchResult" class="search-result"></p>
@@ -213,15 +213,19 @@
                 const id = cells[1]?.textContent.toLowerCase() || '';
                 const tanggal = cells[2]?.textContent.toLowerCase() || '';
                 const waktu = cells[3]?.textContent.toLowerCase() || '';
+                const kasir = cells[4]?.textContent.toLowerCase() || '';
+                const metode = cells[5]?.textContent.toLowerCase() || '';
                 const total = cleanRupiah(cells[6]?.textContent || '');
                 
                 // Cek apakah searchTerm cocok dengan salah satu field
                 const matchId = id.includes(searchTerm);
                 const matchTanggal = tanggal.includes(searchTerm);
                 const matchWaktu = waktu.includes(searchTerm);
+                const matchKasir = kasir.includes(searchTerm);
+                const matchMetode = metode.includes(searchTerm);
                 const matchTotal = total.includes(cleanRupiah(searchTerm));
 
-                if (matchId || matchTanggal || matchWaktu || matchTotal) {
+                if (matchId || matchTanggal || matchWaktu || matchKasir || matchMetode || matchTotal) {
                     row.style.display = '';
                     visibleCount++;
                 } else {
