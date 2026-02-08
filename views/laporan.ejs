@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laporan Penjualan - Afaa' Snack</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo-dash">
+                    <img src="/images/logo.jpeg" alt="Afaa' Snack" class="sidebar-logo">
+                </div>
+            </div>
+            
+            <div class="user-info">
+                <p>Halo, <strong><%= user.nama %></strong></p>
+            </div>
+
+            <nav class="sidebar-nav">
+                <a href="/dashboard" class="nav-item">
+                    <span class="icon">📊</span>
+                    <span>Dashboard</span>
+                </a>
+                <a href="/kasir" class="nav-item">
+                    <span class="icon">💰</span>
+                    <span>Kasir</span>
+                </a>
+                <a href="/stok" class="nav-item">
+                    <span class="icon">📦</span>
+                    <span>Inventory</span>
+                </a>
+                <a href="/laporan" class="nav-item active">
+                    <span class="icon">📄</span>
+                    <span>Laporan Penjualan</span>
+                </a>
+                <a href="/logout" class="nav-item logout">
+                    <span class="icon">🚪</span>
+                    <span>Logout</span>
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="content-header">
+                <h1>Laporan Penjualan</h1>
+                <button class="btn-print-laporan" onclick="window.print()">🖨️ Cetak Laporan</button>
+            </header>
+
+            <!-- Filter -->
+            <div class="filter-section">
+                <form action="/laporan/filter" method="POST" class="filter-form">
+                    <div class="form-group">
+                        <label>Bulan</label>
+                        <select name="bulan" class="form-control">
+                            <option value="1" <%= bulan === 1 ? 'selected' : '' %>>Januari</option>
+                            <option value="2" <%= bulan === 2 ? 'selected' : '' %>>Februari</option>
+                            <option value="3" <%= bulan === 3 ? 'selected' : '' %>>Maret</option>
+                            <option value="4" <%= bulan === 4 ? 'selected' : '' %>>April</option>
+                            <option value="5" <%= bulan === 5 ? 'selected' : '' %>>Mei</option>
+                            <option value="6" <%= bulan === 6 ? 'selected' : '' %>>Juni</option>
+                            <option value="7" <%= bulan === 7 ? 'selected' : '' %>>Juli</option>
+                            <option value="8" <%= bulan === 8 ? 'selected' : '' %>>Agustus</option>
+                            <option value="9" <%= bulan === 9 ? 'selected' : '' %>>September</option>
+                            <option value="10" <%= bulan === 10 ? 'selected' : '' %>>Oktober</option>
+                            <option value="11" <%= bulan === 11 ? 'selected' : '' %>>November</option>
+                            <option value="12" <%= bulan === 12 ? 'selected' : '' %>>Desember</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Tahun</label>
+                        <input type="number" name="tahun" class="form-control" value="<%= tahun %>" min="2000" max="2100" placeholder="Contoh: 2024">
+                    </div>
+                    <button type="submit" class="btn-primary">Filter</button>
+                </form>
+            </div>
+
+            <!-- Summary -->
+            <div class="print-header">
+                <h2 style="text-align: center; margin-bottom: 5px;">Laporan Penjualan</h2>
+                <p style="text-align: center; color: #666; margin-bottom: 20px;">
+                    <% 
+                        const namaBulan = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+                    %>
+                    <%= namaBulan[bulan - 1] %> <%= tahun %>
+                </p>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card card-blue">
+                    <div class="stat-icon">📊</div>
+                    <div class="stat-info">
+                        <h3><%= summary.total_transaksi %></h3>
+                        <p>TOTAL TRANSAKSI</p>
+                    </div>
+                </div>
+
+                <div class="stat-card card-green">
+                    <div class="stat-icon">💰</div>
+                    <div class="stat-info">
+                        <h3>Rp <%= summary.total_penjualan.toLocaleString('id-ID') %></h3>
+                        <p>TOTAL PENJUALAN</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Grafik Penjualan Bulanan -->
+            <div class="content-section no-print">
+                <h2 class="section-title">Grafik Penjualan 12 Bulan Terakhir</h2>
+                <div class="chart-container">
+                    <canvas id="salesChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Tabel Laporan -->
+            <div class="content-section">
+                <h2 class="section-title">Rincian Transaksi</h2>
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Tanggal</th>
+                                <th>Waktu</th>
+                                <th>Kasir</th>
+                                <th>Metode</th>
+                                <th>Total</th>
+                                <th class="no-print">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% if (laporan.length === 0) { %>
+                                <tr>
+                                    <td colspan="7" class="text-center">Tidak ada transaksi pada periode ini</td>
+                                </tr>
+                            <% } else { %>
+                                <% laporan.forEach(t => { %>
+                                    <tr>
+                                        <td>#<%= t.id_transaksi %></td>
+                                        <td><%= t.tanggal %></td>
+                                        <td><%= t.waktu %></td>
+                                        <td><%= t.nama_user %></td>
+                                        <td><%= t.metode_pembayaran || '-' %></td>
+                                        <td>Rp <%= t.total_harga.toLocaleString('id-ID') %></td>
+                                        <td class="no-print">
+                                            <a href="/laporan/detail/<%= t.id_transaksi %>" class="btn-detail">Detail</a>
+                                            <button class="btn-delete" onclick="deleteTransaksi(<%= t.id_transaksi %>)">Hapus</button>
+                                        </td>
+                                    </tr>
+                                <% }) %>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Fungsi untuk menghapus transaksi
+        async function deleteTransaksi(id) {
+            if (!confirm('Yakin ingin menghapus transaksi ini?\n\n✅ Stok produk AKAN dikembalikan otomatis!')) {
+                return;
+            }
+
+            try {
+                const response = await fetch('/laporan/delete', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ id_transaksi: id })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    alert('Transaksi berhasil dihapus');
+                    location.reload();
+                } else {
+                    alert(result.message);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Terjadi kesalahan');
+            }
+        }
+
+        // Data dari server
+        const labels = <%- grafikLabels %>;
+        const dataPenjualan = <%- grafikPenjualan %>;
+        const dataTransaksi = <%- grafikTransaksi %>;
+
+        // Konfigurasi Chart
+        const ctx = document.getElementById('salesChart').getContext('2d');
+        
+        // Gradient untuk bar chart
+        const gradientGreen = ctx.createLinearGradient(0, 0, 0, 400);
+        gradientGreen.addColorStop(0, '#51cf66');
+        gradientGreen.addColorStop(1, '#38d9a9');
+        
+        const gradientPurple = ctx.createLinearGradient(0, 0, 0, 400);
+        gradientPurple.addColorStop(0, '#667eea');
+        gradientPurple.addColorStop(1, '#764ba2');
+        
+        const salesChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Total Penjualan (Rp)',
+                        data: dataPenjualan,
+                        backgroundColor: gradientGreen,
+                        borderColor: '#51cf66',
+                        borderWidth: 2,
+                        borderRadius: 8,
+                        yAxisID: 'y'
+                    },
+                    {
+                        label: 'Jumlah Transaksi',
+                        data: dataTransaksi,
+                        backgroundColor: gradientPurple,
+                        borderColor: '#667eea',
+                        borderWidth: 2,
+                        borderRadius: 8,
+                        yAxisID: 'y1'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                interaction: {
+                    mode: 'index',
+                    intersect: false,
+                },
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: {
+                            usePointStyle: true,
+                            padding: 20,
+                            font: {
+                                size: 13,
+                                weight: 'bold'
+                            }
+                        }
+                    },
+                    title: {
+                        display: true,
+                        text: 'Perbandingan Penjualan & Transaksi',
+                        font: {
+                            size: 16,
+                            weight: 'bold'
+                        },
+                        padding: 20
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        padding: 12,
+                        borderColor: '#667eea',
+                        borderWidth: 1,
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                if (context.datasetIndex === 0) {
+                                    label += 'Rp ' + context.parsed.y.toLocaleString('id-ID');
+                                } else {
+                                    label += context.parsed.y + ' transaksi';
+                                }
+                                return label;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        type: 'linear',
+                        display: true,
+                        position: 'left',
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)'
+                        },
+                        ticks: {
+                            callback: function(value) {
+                                return 'Rp ' + value.toLocaleString('id-ID');
+                            },
+                            font: {
+                                size: 11
+                            }
+                        }
+                    },
+                    y1: {
+                        type: 'linear',
+                        display: true,
+                        position: 'right',
+                        beginAtZero: true,
+                        grid: {
+                            drawOnChartArea: false,
+                        },
+                        ticks: {
+                            callback: function(value) {
+                                return value + ' trx';
+                            },
+                            font: {
+                                size: 11
+                            }
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        },
+                        ticks: {
+                            font: {
+                                size: 11,
+                                weight: 'bold'
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>

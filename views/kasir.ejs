@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kasir - Afaa' Snack</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo-dash">
+                    <img src="/images/logo.jpeg" alt="Afaa' Snack" class="sidebar-logo">
+                </div>
+            </div>
+            
+            <div class="user-info">
+                <p>Halo, <strong><%= user.nama %></strong></p>
+            </div>
+
+            <nav class="sidebar-nav">
+                <a href="/dashboard" class="nav-item">
+                    <span class="icon">📊</span>
+                    <span>Dashboard</span>
+                </a>
+                <a href="/kasir" class="nav-item active">
+                    <span class="icon">💰</span>
+                    <span>Kasir</span>
+                </a>
+                <a href="/stok" class="nav-item">
+                    <span class="icon">📦</span>
+                    <span>Inventory</span>
+                </a>
+                <a href="/laporan" class="nav-item">
+                    <span class="icon">📄</span>
+                    <span>Laporan Penjualan</span>
+                </a>
+                <a href="/logout" class="nav-item logout">
+                    <span class="icon">🚪</span>
+                    <span>Logout</span>
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="content-header">
+                <h1>Kasir</h1>
+            </header>
+
+            <div class="kasir-layout">
+                <!-- Daftar Produk -->
+                <div class="produk-section">
+                    <h2 class="section-title">Daftar Produk</h2>
+                    <input type="text" id="searchProduk" class="search-box" placeholder="🔍 Cari produk...">
+                    <div class="produk-grid" id="produkGrid">
+                        <% snacks.forEach(snack => { %>
+                            <div class="produk-card">
+                                <div class="produk-image">
+                                    <% if (snack.gambar) { %>
+                                        <img src="<%= snack.gambar %>" alt="<%= snack.nama_snack %>" class="product-img">
+                                    <% } else { %>
+                                        <div class="image-placeholder">📦</div>
+                                    <% } %>
+                                </div>
+                                <div class="produk-info">
+                                    <h3><%= snack.nama_snack %></h3>
+                                    <p class="harga">Rp <%= snack.harga.toLocaleString('id-ID') %></p>
+                                    <p class="stok">Stok: <%= snack.stok %></p>
+                                    <div class="produk-actions">
+                                        <input type="number" min="1" max="<%= snack.stok %>" value="1" class="jumlah-input" id="jumlah-<%= snack.id_snack %>">
+                                        <button class="btn-add" onclick="addToCart(<%= snack.id_snack %>)">Tambah</button>
+                                    </div>
+                                </div>
+                            </div>
+                        <% }) %>
+                    </div>
+                </div>
+
+                <!-- Keranjang & Pembayaran -->
+                <div class="cart-section">
+                    <h2 class="section-title">Keranjang</h2>
+                    <div class="cart-container">
+                        <div class="cart-items" id="cartItems">
+                            <% if (cart.length === 0) { %>
+                                <p class="cart-empty">Keranjang masih kosong</p>
+                            <% } else { %>
+                                <% cart.forEach(item => { %>
+                                    <div class="cart-item">
+                                        <div class="item-info">
+                                            <h4><%= item.nama_snack %></h4>
+                                            <p><%= item.jumlah %> x Rp <%= item.harga.toLocaleString('id-ID') %></p>
+                                        </div>
+                                        <div class="item-actions">
+                                            <p class="item-subtotal">Rp <%= item.subtotal.toLocaleString('id-ID') %></p>
+                                            <button class="btn-remove" onclick="removeFromCart(<%= item.id_snack %>)">×</button>
+                                        </div>
+                                    </div>
+                                <% }) %>
+                            <% } %>
+                        </div>
+
+                        <div class="cart-summary">
+                            <div class="summary-row">
+                                <span>Subtotal:</span>
+                                <span id="subtotal">Rp <%= cart.reduce((sum, item) => sum + item.subtotal, 0).toLocaleString('id-ID') %></span>
+                            </div>
+                            <div class="summary-row total">
+                                <span>Total:</span>
+                                <span id="total">Rp <%= cart.reduce((sum, item) => sum + item.subtotal, 0).toLocaleString('id-ID') %></span>
+                            </div>
+                        </div>
+
+                        <div class="payment-section">
+                            <div class="form-group">
+                                <label>Metode Pembayaran</label>
+                                <select id="metodePembayaran" class="form-control">
+                                    <option value="Tunai">Tunai</option>
+                                    <option value="QRIS">QRIS</option>
+                                    <option value="Transfer">Transfer</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Jumlah Bayar</label>
+                                <input type="number" id="jumlahBayar" class="form-control" placeholder="0">
+                            </div>
+                            <div class="form-group">
+                                <label>Kembalian</label>
+                                <input type="text" id="kembalian" class="form-control" readonly value="Rp 0">
+                            </div>
+                            <button class="btn-checkout" onclick="checkout()">BAYAR</button>
+                            <button class="btn-clear" onclick="clearCart()">BERSIHKAN</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="/js/kasir.js"></script>
+</body>
+</html>

@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventory - Afaa' Snack</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo-dash">
+                    <img src="/images/logo.jpeg" alt="Afaa' Snack" class="sidebar-logo">
+                </div>
+            </div>
+            
+            <div class="user-info">
+                <p>Halo, <strong><%= user.nama %></strong></p>
+            </div>
+
+            <nav class="sidebar-nav">
+                <a href="/dashboard" class="nav-item">
+                    <span class="icon">📊</span>
+                    <span>Dashboard</span>
+                </a>
+                <a href="/kasir" class="nav-item">
+                    <span class="icon">💰</span>
+                    <span>Kasir</span>
+                </a>
+                <a href="/stok" class="nav-item active">
+                    <span class="icon">📦</span>
+                    <span>Inventory</span>
+                </a>
+                <a href="/laporan" class="nav-item">
+                    <span class="icon">📄</span>
+                    <span>Laporan Penjualan</span>
+                </a>
+                <a href="/logout" class="nav-item logout">
+                    <span class="icon">🚪</span>
+                    <span>Logout</span>
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="content-header">
+                <h1>Inventory Stok</h1>
+                <button class="btn-primary" onclick="showAddModal()">+ Tambah Snack</button>
+            </header>
+
+            <div class="content-section">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <input type="text" id="searchStok" class="search-box" placeholder="🔍 Cari nama snack...">
+                </div>
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th onclick="sortTable(0)" style="cursor: pointer;" title="Klik untuk sort">ID <span id="sort-icon-0">↕️</span></th>
+                                <th>Gambar</th>
+                                <th>Nama Snack</th>
+                                <th onclick="sortTable(3)" style="cursor: pointer;" title="Klik untuk sort">Harga <span id="sort-icon-3">↕️</span></th>
+                                <th onclick="sortTable(4)" style="cursor: pointer;" title="Klik untuk sort">Stok <span id="sort-icon-4">↕️</span></th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% if (snacks.length === 0) { %>
+                                <tr>
+                                    <td colspan="6" class="text-center">Belum ada data snack</td>
+                                </tr>
+                            <% } else { %>
+                                <% snacks.forEach(snack => { %>
+                                    <tr>
+                                        <td><%= snack.id_snack %></td>
+                                        <td>
+                                            <% if (snack.gambar) { %>
+                                                <img src="<%= snack.gambar %>" alt="<%= snack.nama_snack %>" class="table-product-img">
+                                            <% } else { %>
+                                                <span class="no-image">📦</span>
+                                            <% } %>
+                                        </td>
+                                        <td><%= snack.nama_snack %></td>
+                                        <td>Rp <%= snack.harga.toLocaleString('id-ID') %></td>
+                                        <td><%= snack.stok %></td>
+                                        <td>
+                                            <button class="btn-edit" onclick="editSnack(<%= snack.id_snack %>, '<%= snack.nama_snack %>', <%= snack.harga %>, <%= snack.stok %>, '<%= snack.gambar || '' %>')">Edit</button>
+                                            <button class="btn-delete" onclick="deleteSnack(<%= snack.id_snack %>)">Hapus</button>
+                                        </td>
+                                    </tr>
+                                <% }) %>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal Tambah Snack -->
+    <div id="addModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeAddModal()">&times;</span>
+            <h2>Tambah Snack Baru</h2>
+            <form action="/stok/add" method="POST" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label>Nama Snack</label>
+                    <input type="text" name="nama_snack" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label>Harga</label>
+                    <input type="number" name="harga" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label>Stok</label>
+                    <input type="number" name="stok" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label>Gambar Produk</label>
+                    <input type="file" name="gambar" class="form-control" accept="image/*">
+                    <small>Format: JPG, PNG, JPEG (Max 2MB)</small>
+                </div>
+                <button type="submit" class="btn-primary">Simpan</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Edit Snack -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeEditModal()">&times;</span>
+            <h2>Edit Snack</h2>
+            <form id="editForm" enctype="multipart/form-data">
+                <input type="hidden" id="edit_id_snack" name="id_snack">
+                <input type="hidden" id="edit_gambar_lama" name="gambar_lama">
+                
+                <div class="form-group">
+                    <label>Gambar Saat Ini</label>
+                    <div id="preview_gambar_container" style="margin-bottom: 10px;">
+                        <img id="preview_gambar" src="" alt="Preview" style="max-width: 200px; display: none; border-radius: 8px;">
+                        <p id="no_gambar" style="color: #999; display: none;">Belum ada gambar</p>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Nama Snack</label>
+                    <input type="text" id="edit_nama_snack" name="nama_snack" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label>Harga</label>
+                    <input type="number" id="edit_harga" name="harga" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label>Stok</label>
+                    <input type="number" id="edit_stok" name="stok" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label>Ganti Gambar (Opsional)</label>
+                    <input type="file" id="edit_gambar" name="gambar" class="form-control" accept="image/*">
+                    <small>Kosongkan jika tidak ingin mengganti gambar</small>
+                </div>
+                <button type="button" class="btn-primary" onclick="updateSnack()">Update</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="/js/stok.js"></script>
+</body>
+</html>

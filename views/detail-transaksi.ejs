@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detail Transaksi - Afaa' Snack</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo-dash">
+                    <img src="/images/logo.jpeg" alt="Afaa' Snack" class="sidebar-logo">
+                </div>
+            </div>
+            
+            <div class="user-info">
+                <p>Halo, <strong><%= user.nama %></strong></p>
+            </div>
+
+            <nav class="sidebar-nav">
+                <a href="/dashboard" class="nav-item">
+                    <span class="icon">📊</span>
+                    <span>Dashboard</span>
+                </a>
+                <a href="/kasir" class="nav-item">
+                    <span class="icon">💰</span>
+                    <span>Kasir</span>
+                </a>
+                <a href="/stok" class="nav-item">
+                    <span class="icon">📦</span>
+                    <span>Inventory</span>
+                </a>
+                <a href="/laporan" class="nav-item active">
+                    <span class="icon">📄</span>
+                    <span>Laporan Penjualan</span>
+                </a>
+                <a href="/logout" class="nav-item logout">
+                    <span class="icon">🚪</span>
+                    <span>Logout</span>
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="content-header">
+                <h1>Detail Transaksi #<%= transaksi.id_transaksi %></h1>
+                <a href="/laporan" class="btn-back">← Kembali</a>
+            </header>
+
+            <div class="detail-container">
+                <!-- Info Transaksi -->
+                <div class="detail-section">
+                    <h3>Informasi Transaksi</h3>
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <span class="label">Tanggal:</span>
+                            <span class="value"><%= transaksi.tanggal_format %></span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="label">Kasir:</span>
+                            <span class="value"><%= transaksi.nama_user %></span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="label">Metode Pembayaran:</span>
+                            <span class="value"><%= transaksi.metode_pembayaran %></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Detail Barang -->
+                <div class="detail-section">
+                    <h3>Detail Barang</h3>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Nama Snack</th>
+                                <th>Harga</th>
+                                <th>Jumlah</th>
+                                <th>Subtotal</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% detail.forEach(item => { %>
+                                <tr>
+                                    <td><%= item.nama_snack %></td>
+                                    <td>Rp <%= item.harga.toLocaleString('id-ID') %></td>
+                                    <td><%= item.jumlah_snack %></td>
+                                    <td>Rp <%= item.subtotal.toLocaleString('id-ID') %></td>
+                                </tr>
+                            <% }) %>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Summary Pembayaran -->
+                <div class="detail-section">
+                    <h3>Pembayaran</h3>
+                    <div class="payment-summary">
+                        <div class="summary-row">
+                            <span>Total Harga:</span>
+                            <span>Rp <%= transaksi.total_harga.toLocaleString('id-ID') %></span>
+                        </div>
+                        <div class="summary-row">
+                            <span>Jumlah Bayar:</span>
+                            <span>Rp <%= transaksi.jumlah_bayar.toLocaleString('id-ID') %></span>
+                        </div>
+                        <div class="summary-row total">
+                            <span>Kembalian:</span>
+                            <span>Rp <%= transaksi.kembalian.toLocaleString('id-ID') %></span>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="btn-print" onclick="window.print()">🖨️ Cetak Struk</button>
+            </div>
+        </main>
+    </div>
+</body>
+</html>
