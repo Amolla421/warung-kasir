@@ -84,7 +84,7 @@
                     <table class="data-table">
                         <thead>
                             <tr>
-                                <th>ID</th>
+                                <th>No</th>
                                 <th>Tanggal</th>
                                 <th>Waktu</th>
                                 <th>Kasir</th>
@@ -99,9 +99,9 @@
                             <% } else { %>
                                 <% transaksiTerbaru.forEach(t => { %>
                                     <tr>
-                                        <td>#<%= t.id_transaksi %></td>
+                                        <td><%= t.no %></td>
                                         <td><%= new Date(t.tanggal).toLocaleDateString('id-ID') %></td>
-                                        <td><%= t.waktu %></td>
+                                        <td class="current-time">-</td>
                                         <td><%= t.nama_user %></td>
                                         <td>Rp <%= t.total_harga.toLocaleString('id-ID') %></td>
                                     </tr>
@@ -115,10 +115,31 @@
     </div>
 
     <script>
+        // Fungsi untuk update waktu real-time di semua baris
+        function updateCurrentTime() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('id-ID', { 
+                hour: '2-digit', 
+                minute: '2-digit',
+                hour12: false 
+            });
+            
+            // Update semua cell dengan class 'current-time'
+            document.querySelectorAll('.current-time').forEach(cell => {
+                cell.textContent = timeString;
+            });
+        }
+
+        // Update waktu setiap detik
+        setInterval(updateCurrentTime, 1000);
+        
+        // Update waktu saat halaman pertama kali dimuat
+        updateCurrentTime();
+
         // Auto refresh setiap 5 detik
         setInterval(() => {
             location.reload();
-        }, 5000); // 5000ms = 5 detik
+        }, 5000);
     </script>
 </body>
 </html>

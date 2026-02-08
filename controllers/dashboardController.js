@@ -19,17 +19,17 @@ exports.index = async (req, res) => {
 
         // Transaksi Terbaru
         const [transaksiTerbaru] = await db.query(`
-            SELECT t.id_transaksi, t.tanggal, t.total_harga, u.nama_user,
-                   DATE_FORMAT(NOW(), '%H:%i') as waktu
+            SELECT t.id_transaksi, t.tanggal, t.total_harga, u.nama_user
             FROM Transaksi t
             JOIN User u ON t.id_user = u.id_user
             ORDER BY t.created_at DESC
             LIMIT 5
         `);
 
-        // Format harga (hapus desimal)
-        transaksiTerbaru.forEach(t => {
+        // Format harga (hapus desimal) dan tambah nomor urut
+        transaksiTerbaru.forEach((t, index) => {
             t.total_harga = Math.floor(t.total_harga);
+            t.no = index + 1; // Nomor urut: 1, 2, 3, dst
         });
 
         res.render('dashboard', {
