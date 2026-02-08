@@ -181,6 +181,21 @@ exports.detail = async (req, res) => {
             return res.status(404).send('Transaksi tidak ditemukan');
         }
 
+        // Hitung nomor urut transaksi ini di bulan yang sama
+        const bulan = new Date(transaksi[0].tanggal).getMonth() + 1;
+        const tahun = new Date(transaksi[0].tanggal).getFullYear();
+        
+        const [allTransaksi] = await db.query(`
+            SELECT id_transaksi
+            FROM Transaksi
+            WHERE MONTH(tanggal) = ? AND YEAR(tanggal) = ?
+            ORDER BY created_at DESC
+        `, [bulan, tahun]);
+
+        // Cari posisi transaksi ini
+        const displayNo = allTransaksi.findIndex(t => t.id_transaksi === parseInt(id)) + 1;
+        transaksi[0].display_no = displayNo;
+
         const [detail] = await db.query(`
             SELECT 
                 dt.*,
