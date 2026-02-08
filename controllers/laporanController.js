@@ -54,11 +54,12 @@ exports.index = async (req, res) => {
         });
 
         // Format harga (hapus desimal)
-        // ✨ TAMBAHKAN NOMOR URUT DAN DISPLAY ID
+        // ✨ PERBAIKI NOMOR URUT DAN DISPLAY ID (transaksi terbaru = nomor tertinggi)
+        const totalLaporan = laporan.length;
         laporan.forEach((l, index) => {
             l.total_harga = Math.floor(l.total_harga);
-            l.no = index + 1; // Nomor urut display
-            l.display_id = `#${String(index + 1).padStart(6, '0')}`; // Format: #000001
+            l.no = totalLaporan - index; // Nomor urut terbalik: transaksi terbaru = nomor tertinggi
+            l.display_id = `#${String(totalLaporan - index).padStart(6, '0')}`; // Format: #000003, #000002, #000001
         });
 
         res.render('laporan', {
@@ -133,11 +134,12 @@ exports.filter = async (req, res) => {
         });
 
         // Format harga (hapus desimal)
-        // ✨ TAMBAHKAN NOMOR URUT DAN DISPLAY ID
+        // ✨ PERBAIKI NOMOR URUT DAN DISPLAY ID (transaksi terbaru = nomor tertinggi)
+        const totalLaporan = laporan.length;
         laporan.forEach((l, index) => {
             l.total_harga = Math.floor(l.total_harga);
-            l.no = index + 1; // Nomor urut display
-            l.display_id = `#${String(index + 1).padStart(6, '0')}`; // Format: #000001
+            l.no = totalLaporan - index; // Nomor urut terbalik: transaksi terbaru = nomor tertinggi
+            l.display_id = `#${String(totalLaporan - index).padStart(6, '0')}`; // Format: #000003, #000002, #000001
         });
 
         res.render('laporan', {
@@ -167,6 +169,7 @@ exports.detail = async (req, res) => {
             SELECT 
                 t.*,
                 DATE_FORMAT(t.tanggal, '%d/%m/%Y') as tanggal_format,
+                DATE_FORMAT(t.created_at, '%H:%i') as waktu,
                 u.nama_user,
                 p.metode_pembayaran,
                 p.jumlah_bayar,
@@ -192,8 +195,9 @@ exports.detail = async (req, res) => {
             ORDER BY created_at DESC
         `, [bulan, tahun]);
 
-        // Cari posisi transaksi ini
-        const displayNo = allTransaksi.findIndex(t => t.id_transaksi === parseInt(id)) + 1;
+        // Cari posisi transaksi ini dan balik urutannya
+        const indexFromNewest = allTransaksi.findIndex(t => t.id_transaksi === parseInt(id));
+        const displayNo = allTransaksi.length - indexFromNewest;
         transaksi[0].display_no = displayNo;
 
         const [detail] = await db.query(`
