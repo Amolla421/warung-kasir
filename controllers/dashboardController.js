@@ -20,7 +20,7 @@ exports.index = async (req, res) => {
         // Transaksi Terbaru
         const [transaksiTerbaru] = await db.query(`
             SELECT t.id_transaksi, t.tanggal, t.total_harga, u.nama_user,
-                   DATE_FORMAT(t.created_at, '%H:%i') as waktu
+                   DATE_FORMAT(NOW(), '%H:%i') as waktu
             FROM Transaksi t
             JOIN User u ON t.id_user = u.id_user
             ORDER BY t.created_at DESC
