@@ -258,13 +258,34 @@ exports.deleteTransaksi = async (req, res) => {
 
             // Buat tabel backup untuk Pembayaran
             await connection.query(`
-                CREATE TEMPORARY TABLE Pembayaran_Backup AS
+                CREATE TEMPORARY TABLE Pembayaran_Backup (
+                    id_pembayaran INT,
+                    id_transaksi INT,
+                    metode_pembayaran VARCHAR(50),
+                    jumlah_bayar DECIMAL(10,2),
+                    kembalian DECIMAL(10,2),
+                    created_at TIMESTAMP
+                )
+            `);
+            
+            await connection.query(`
+                INSERT INTO Pembayaran_Backup
                 SELECT * FROM Pembayaran
             `);
 
             // Buat tabel backup untuk Detail_Transaksi
             await connection.query(`
-                CREATE TEMPORARY TABLE Detail_Transaksi_Backup AS
+                CREATE TEMPORARY TABLE Detail_Transaksi_Backup (
+                    id_detail INT,
+                    id_transaksi INT,
+                    id_snack INT,
+                    jumlah_snack INT,
+                    subtotal DECIMAL(10,2)
+                )
+            `);
+            
+            await connection.query(`
+                INSERT INTO Detail_Transaksi_Backup
                 SELECT * FROM Detail_Transaksi
             `);
 
