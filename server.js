@@ -4,6 +4,9 @@ const bodyParser = require('body-parser');
 const path = require('path');
 require('dotenv').config();
 
+// Set timezone untuk Node.js ke WIB (UTC+7)
+process.env.TZ = 'Asia/Jakarta';
+
 const app = express();
 
 // Middleware

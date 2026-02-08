@@ -10,6 +10,7 @@ const pool = mysql.createPool({
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
+  timezone: '+07:00', // Zona waktu Indonesia (WIB)
 
   ssl: process.env.DB_SSL === 'true'
     ? { rejectUnauthorized: true }
