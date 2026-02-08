@@ -54,8 +54,11 @@ exports.index = async (req, res) => {
         });
 
         // Format harga (hapus desimal)
-        laporan.forEach(l => {
+        // ✨ TAMBAHKAN NOMOR URUT DAN DISPLAY ID
+        laporan.forEach((l, index) => {
             l.total_harga = Math.floor(l.total_harga);
+            l.no = index + 1; // Nomor urut display
+            l.display_id = `#${String(index + 1).padStart(6, '0')}`; // Format: #000001
         });
 
         res.render('laporan', {
@@ -130,8 +133,11 @@ exports.filter = async (req, res) => {
         });
 
         // Format harga (hapus desimal)
-        laporan.forEach(l => {
+        // ✨ TAMBAHKAN NOMOR URUT DAN DISPLAY ID
+        laporan.forEach((l, index) => {
             l.total_harga = Math.floor(l.total_harga);
+            l.no = index + 1; // Nomor urut display
+            l.display_id = `#${String(index + 1).padStart(6, '0')}`; // Format: #000001
         });
 
         res.render('laporan', {
@@ -190,9 +196,11 @@ exports.detail = async (req, res) => {
         transaksi[0].jumlah_bayar = Math.floor(transaksi[0].jumlah_bayar);
         transaksi[0].kembalian = Math.floor(transaksi[0].kembalian);
         
-        detail.forEach(d => {
+        // ✨ TAMBAHKAN NOMOR URUT UNTUK DETAIL
+        detail.forEach((d, index) => {
             d.harga = Math.floor(d.harga);
             d.subtotal = Math.floor(d.subtotal);
+            d.no = index + 1; // Nomor urut display
         });
 
         res.render('detail-transaksi', {

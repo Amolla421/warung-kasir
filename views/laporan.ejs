@@ -124,6 +124,7 @@
                     <table class="data-table">
                         <thead>
                             <tr>
+                                <th>No</th>
                                 <th>ID</th>
                                 <th>Tanggal</th>
                                 <th>Waktu</th>
@@ -136,12 +137,13 @@
                         <tbody>
                             <% if (laporan.length === 0) { %>
                                 <tr>
-                                    <td colspan="7" class="text-center">Tidak ada transaksi pada periode ini</td>
+                                    <td colspan="8" class="text-center">Tidak ada transaksi pada periode ini</td>
                                 </tr>
                             <% } else { %>
                                 <% laporan.forEach(t => { %>
                                     <tr>
-                                        <td>#<%= t.id_transaksi %></td>
+                                        <td><%= t.no %></td>
+                                        <td><%= t.display_id %></td>
                                         <td><%= t.tanggal %></td>
                                         <td><%= t.waktu %></td>
                                         <td><%= t.nama_user %></td>

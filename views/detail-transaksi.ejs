@@ -77,6 +77,7 @@
                     <table class="data-table">
                         <thead>
                             <tr>
+                                <th>No</th>
                                 <th>Nama Snack</th>
                                 <th>Harga</th>
                                 <th>Jumlah</th>
@@ -86,6 +87,7 @@
                         <tbody>
                             <% detail.forEach(item => { %>
                                 <tr>
+                                    <td><%= item.no %></td>
                                     <td><%= item.nama_snack %></td>
                                     <td>Rp <%= item.harga.toLocaleString('id-ID') %></td>
                                     <td><%= item.jumlah_snack %></td>

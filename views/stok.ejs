@@ -59,7 +59,7 @@
                     <table class="data-table">
                         <thead>
                             <tr>
-                                <th onclick="sortTable(0)" style="cursor: pointer;" title="Klik untuk sort">ID <span id="sort-icon-0">↕️</span></th>
+                                <th onclick="sortTable(0)" style="cursor: pointer;" title="Klik untuk sort">No <span id="sort-icon-0">↕️</span></th>
                                 <th>Gambar</th>
                                 <th>Nama Snack</th>
                                 <th onclick="sortTable(3)" style="cursor: pointer;" title="Klik untuk sort">Harga <span id="sort-icon-3">↕️</span></th>
@@ -75,7 +75,7 @@
                             <% } else { %>
                                 <% snacks.forEach(snack => { %>
                                     <tr>
-                                        <td><%= snack.id_snack %></td>
+                                        <td><%= snack.no %></td>
                                         <td>
                                             <% if (snack.gambar) { %>
                                                 <img src="<%= snack.gambar %>" alt="<%= snack.nama_snack %>" class="table-product-img">

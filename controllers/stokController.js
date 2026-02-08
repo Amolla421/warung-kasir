@@ -36,8 +36,10 @@ exports.index = async (req, res) => {
         const [snacks] = await db.query('SELECT * FROM Snack ORDER BY id_snack ASC');
 
         // Format harga untuk Indonesia (tanpa desimal)
-        snacks.forEach(snack => {
+        // ✨ TAMBAHKAN NOMOR URUT
+        snacks.forEach((snack, index) => {
             snack.harga = Math.floor(snack.harga);
+            snack.no = index + 1; // Nomor urut display
         });
 
         res.render('stok', {
