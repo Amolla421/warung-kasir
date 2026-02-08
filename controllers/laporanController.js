@@ -225,8 +225,7 @@ exports.deleteTransaksi = async (req, res) => {
             return res.json({ success: false, message: 'Transaksi tidak ditemukan' });
         }
 
-        // KEMBALIKAN STOK PRODUK
-        // Ambil detail transaksi untuk kembalikan stok
+        // KEMBALIKAN STOK PRODUK DULU SEBELUM HAPUS
         const [detailTransaksi] = await connection.query(
             'SELECT id_snack, jumlah_snack FROM Detail_Transaksi WHERE id_transaksi = ?',
             [id_transaksi]
@@ -249,126 +248,8 @@ exports.deleteTransaksi = async (req, res) => {
         // Hapus transaksi
         await connection.query('DELETE FROM Transaksi WHERE id_transaksi = ?', [id_transaksi]);
 
-        // OTOMATIS REORDER ID TRANSAKSI
-        const [transaksis] = await connection.query('SELECT * FROM Transaksi ORDER BY id_transaksi');
-
-        if (transaksis.length > 0) {
-            // Disable foreign key checks sementara
-            await connection.query('SET FOREIGN_KEY_CHECKS = 0');
-
-            // Buat tabel backup untuk Pembayaran
-            await connection.query(`
-                CREATE TEMPORARY TABLE Pembayaran_Backup (
-                    id_pembayaran INT,
-                    id_transaksi INT,
-                    metode_pembayaran VARCHAR(50),
-                    jumlah_bayar DECIMAL(10,2),
-                    kembalian DECIMAL(10,2),
-                    created_at TIMESTAMP
-                )
-            `);
-            
-            await connection.query(`
-                INSERT INTO Pembayaran_Backup
-                SELECT * FROM Pembayaran
-            `);
-
-            // Buat tabel backup untuk Detail_Transaksi
-            await connection.query(`
-                CREATE TEMPORARY TABLE Detail_Transaksi_Backup (
-                    id_detail INT,
-                    id_transaksi INT,
-                    id_snack INT,
-                    jumlah_snack INT,
-                    subtotal DECIMAL(10,2)
-                )
-            `);
-            
-            await connection.query(`
-                INSERT INTO Detail_Transaksi_Backup
-                SELECT * FROM Detail_Transaksi
-            `);
-
-            // Buat tabel backup untuk Transaksi dengan ID mapping
-            await connection.query(`
-                CREATE TEMPORARY TABLE Transaksi_Backup (
-                    old_id INT,
-                    id_user INT,
-                    tanggal DATE,
-                    total_harga DECIMAL(10,2),
-                    created_at TIMESTAMP
-                )
-            `);
-
-            // Copy data transaksi ke backup
-            for (let i = 0; i < transaksis.length; i++) {
-                const t = transaksis[i];
-                await connection.query(
-                    'INSERT INTO Transaksi_Backup (old_id, id_user, tanggal, total_harga, created_at) VALUES (?, ?, ?, ?, ?)',
-                    [t.id_transaksi, t.id_user, t.tanggal, t.total_harga, t.created_at]
-                );
-            }
-
-            // Hapus semua data (foreign key sudah disabled)
-            await connection.query('DELETE FROM Pembayaran');
-            await connection.query('DELETE FROM Detail_Transaksi');
-            await connection.query('DELETE FROM Transaksi');
-
-            // Reset auto increment
-            await connection.query('ALTER TABLE Transaksi AUTO_INCREMENT = 1');
-
-            // Insert kembali Transaksi (ID otomatis urut 1, 2, 3, ...)
-            await connection.query(`
-                INSERT INTO Transaksi (id_user, tanggal, total_harga, created_at)
-                SELECT id_user, tanggal, total_harga, created_at 
-                FROM Transaksi_Backup
-                ORDER BY old_id
-            `);
-
-            // Buat mapping old_id ke new_id
-            await connection.query(`
-                CREATE TEMPORARY TABLE ID_Mapping (
-                    old_id INT,
-                    new_id INT AUTO_INCREMENT PRIMARY KEY
-                )
-            `);
-
-            await connection.query(`
-                INSERT INTO ID_Mapping (old_id)
-                SELECT old_id FROM Transaksi_Backup ORDER BY old_id
-            `);
-
-            // Insert kembali Pembayaran dengan ID transaksi yang baru
-            await connection.query(`
-                INSERT INTO Pembayaran (id_transaksi, metode_pembayaran, jumlah_bayar, kembalian, created_at)
-                SELECT m.new_id, p.metode_pembayaran, p.jumlah_bayar, p.kembalian, p.created_at
-                FROM Pembayaran_Backup p
-                JOIN ID_Mapping m ON p.id_transaksi = m.old_id
-            `);
-
-            // Insert kembali Detail_Transaksi dengan ID transaksi yang baru
-            await connection.query(`
-                INSERT INTO Detail_Transaksi (id_transaksi, id_snack, jumlah_snack, subtotal)
-                SELECT m.new_id, d.id_snack, d.jumlah_snack, d.subtotal
-                FROM Detail_Transaksi_Backup d
-                JOIN ID_Mapping m ON d.id_transaksi = m.old_id
-            `);
-
-            // Drop temporary tables
-            await connection.query('DROP TEMPORARY TABLE IF EXISTS Transaksi_Backup');
-            await connection.query('DROP TEMPORARY TABLE IF EXISTS Pembayaran_Backup');
-            await connection.query('DROP TEMPORARY TABLE IF EXISTS Detail_Transaksi_Backup');
-            await connection.query('DROP TEMPORARY TABLE IF EXISTS ID_Mapping');
-
-            // Enable kembali foreign key checks
-            await connection.query('SET FOREIGN_KEY_CHECKS = 1');
-        } else {
-            // Jika tabel kosong, reset auto increment ke 1
-            await connection.query('ALTER TABLE Transaksi AUTO_INCREMENT = 1');
-        }
-
         await connection.commit();
-        res.json({ success: true, message: 'Transaksi berhasil dihapus' });
+        res.json({ success: true, message: 'Transaksi berhasil dihapus dan stok dikembalikan' });
 
     } catch (error) {
         await connection.rollback();
