@@ -135,43 +135,8 @@ exports.deleteSnack = async (req, res) => {
         // Hapus snack
         await connection.query('DELETE FROM Snack WHERE id_snack = ?', [id_snack]);
 
-        // OTOMATIS REORDER ID - Ambil semua data yang tersisa
-        const [snacks] = await connection.query('SELECT * FROM Snack ORDER BY id_snack');
-
-        if (snacks.length > 0) {
-            // Buat tabel temporary
-            await connection.query('CREATE TEMPORARY TABLE Snack_Temp LIKE Snack');
-
-            // Copy data ke temporary table dengan ID baru (urut dari 1)
-            for (let i = 0; i < snacks.length; i++) {
-                const s = snacks[i];
-                await connection.query(
-                    'INSERT INTO Snack_Temp (nama_snack, harga, stok, gambar, created_at) VALUES (?, ?, ?, ?, ?)',
-                    [s.nama_snack, s.harga, s.stok, s.gambar, s.created_at]
-                );
-            }
-
-            // Hapus semua data di tabel asli
-            await connection.query('DELETE FROM Snack');
-
-            // Reset auto increment
-            await connection.query('ALTER TABLE Snack AUTO_INCREMENT = 1');
-
-            // Copy kembali dari temporary ke tabel asli (ID otomatis urut 1, 2, 3, ...)
-            await connection.query(`
-                INSERT INTO Snack (nama_snack, harga, stok, gambar, created_at)
-                SELECT nama_snack, harga, stok, gambar, created_at FROM Snack_Temp
-            `);
-
-            // Drop temporary table
-            await connection.query('DROP TEMPORARY TABLE Snack_Temp');
-        } else {
-            // Jika tabel kosong, reset auto increment ke 1
-            await connection.query('ALTER TABLE Snack AUTO_INCREMENT = 1');
-        }
-
         await connection.commit();
-        res.json({ success: true });
+        res.json({ success: true, message: 'Snack berhasil dihapus' });
         
     } catch (error) {
         await connection.rollback();
@@ -181,4 +146,3 @@ exports.deleteSnack = async (req, res) => {
         connection.release();
     }
 };
-
