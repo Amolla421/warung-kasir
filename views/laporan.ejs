@@ -81,6 +81,15 @@
                 </form>
             </div>
 
+            <!-- Search Box -->
+            <div class="search-section no-print">
+                <div class="search-box">
+                    <input type="text" id="searchInput" placeholder="🔍 Cari berdasarkan ID, Tanggal, Waktu, atau Total..." class="search-input">
+                    <button id="clearSearch" class="btn-clear-search" style="display:none;">✕</button>
+                </div>
+                <p id="searchResult" class="search-result"></p>
+            </div>
+
             <!-- Summary -->
             <div class="print-header">
                 <h2 style="text-align: center; margin-bottom: 5px;">Laporan Penjualan</h2>
@@ -165,6 +174,78 @@
     </div>
 
     <script>
+        // Fungsi Pencarian Real-time
+        const searchInput = document.getElementById('searchInput');
+        const clearSearchBtn = document.getElementById('clearSearch');
+        const searchResult = document.getElementById('searchResult');
+        const tableRows = document.querySelectorAll('.data-table tbody tr');
+
+        // Function untuk membersihkan format Rupiah untuk pencarian
+        function cleanRupiah(str) {
+            return str.replace(/[Rp\s.]/g, '');
+        }
+
+        searchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase().trim();
+            let visibleCount = 0;
+
+            if (searchTerm === '') {
+                clearSearchBtn.style.display = 'none';
+                searchResult.textContent = '';
+                tableRows.forEach(row => {
+                    if (!row.querySelector('td[colspan]')) {
+                        row.style.display = '';
+                    }
+                });
+                return;
+            }
+
+            clearSearchBtn.style.display = 'inline-block';
+
+            tableRows.forEach(row => {
+                // Skip row "tidak ada transaksi"
+                if (row.querySelector('td[colspan]')) {
+                    row.style.display = 'none';
+                    return;
+                }
+
+                const cells = row.querySelectorAll('td');
+                const id = cells[1]?.textContent.toLowerCase() || '';
+                const tanggal = cells[2]?.textContent.toLowerCase() || '';
+                const waktu = cells[3]?.textContent.toLowerCase() || '';
+                const total = cleanRupiah(cells[6]?.textContent || '');
+                
+                // Cek apakah searchTerm cocok dengan salah satu field
+                const matchId = id.includes(searchTerm);
+                const matchTanggal = tanggal.includes(searchTerm);
+                const matchWaktu = waktu.includes(searchTerm);
+                const matchTotal = total.includes(cleanRupiah(searchTerm));
+
+                if (matchId || matchTanggal || matchWaktu || matchTotal) {
+                    row.style.display = '';
+                    visibleCount++;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+
+            // Update hasil pencarian
+            if (visibleCount === 0) {
+                searchResult.textContent = '❌ Tidak ada hasil yang cocok';
+                searchResult.style.color = '#e03131';
+            } else {
+                searchResult.textContent = `✅ Ditemukan ${visibleCount} transaksi`;
+                searchResult.style.color = '#2b8a3e';
+            }
+        });
+
+        // Clear search
+        clearSearchBtn.addEventListener('click', function() {
+            searchInput.value = '';
+            searchInput.dispatchEvent(new Event('input'));
+            searchInput.focus();
+        });
+
         // Fungsi untuk menghapus transaksi
         async function deleteTransaksi(id) {
             if (!confirm('Yakin ingin menghapus transaksi ini?\n\n✅ Stok produk AKAN dikembalikan otomatis!')) {
