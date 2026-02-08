@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - Afaa' Snack</title>
+    <link rel="icon" type="image/jpeg" href="/images/logo.jpeg">
     <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
@@ -101,7 +102,7 @@
                                     <tr>
                                         <td><%= t.no %></td>
                                         <td><%= new Date(t.tanggal).toLocaleDateString('id-ID') %></td>
-                                        <td><%= t.waktu %></td>
+                                        <td class="current-time" data-waktu="<%= t.waktu %>"><%= t.waktu %></td>
                                         <td><%= t.nama_user %></td>
                                         <td>Rp <%= t.total_harga.toLocaleString('id-ID') %></td>
                                     </tr>
@@ -115,10 +116,31 @@
     </div>
 
     <script>
-        // Auto refresh setiap 5 detik untuk update data terbaru
+        // Fungsi untuk update waktu real-time
+        function updateCurrentTime() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('id-ID', { 
+                hour: '2-digit', 
+                minute: '2-digit',
+                hour12: false 
+            });
+            
+            // Update semua cell dengan class 'current-time' dengan waktu saat ini
+            document.querySelectorAll('.current-time').forEach(cell => {
+                cell.textContent = timeString;
+            });
+        }
+
+        // Update waktu setiap detik
+        setInterval(updateCurrentTime, 1000);
+        
+        // Update waktu saat halaman pertama kali dimuat
+        updateCurrentTime();
+
+        // Auto refresh setiap 30 detik untuk update data terbaru
         setInterval(() => {
             location.reload();
-        }, 5000);
+        }, 30000);
     </script>
 </body>
 </html>
