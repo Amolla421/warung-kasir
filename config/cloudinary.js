@@ -2,6 +2,12 @@ const cloudinary = require('cloudinary').v2;
 const multer = require('multer');
 const { Readable } = require('stream');
 
+// Debug: Log environment variables (without showing full values for security)
+console.log('🔍 Checking Cloudinary environment variables...');
+console.log('CLOUDINARY_CLOUD_NAME:', process.env.CLOUDINARY_CLOUD_NAME ? '✅ Set (' + process.env.CLOUDINARY_CLOUD_NAME.substring(0, 3) + '***)' : '❌ Not set');
+console.log('CLOUDINARY_API_KEY:', process.env.CLOUDINARY_API_KEY ? '✅ Set (' + process.env.CLOUDINARY_API_KEY.substring(0, 3) + '***)' : '❌ Not set');
+console.log('CLOUDINARY_API_SECRET:', process.env.CLOUDINARY_API_SECRET ? '✅ Set (***hidden***)' : '❌ Not set');
+
 // Konfigurasi Cloudinary
 cloudinary.config({
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -10,13 +16,25 @@ cloudinary.config({
     secure: true
 });
 
-// Test koneksi saat startup (hanya jika credentials tersedia)
+// Test koneksi saat startup (hanya jika semua credentials tersedia)
 if (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET) {
+    console.log('📡 Testing Cloudinary connection...');
     cloudinary.api.ping()
-        .then(() => console.log('✅ Cloudinary connected successfully'))
-        .catch(err => console.error('❌ Cloudinary connection failed:', err.message));
+        .then(() => {
+            console.log('✅ Cloudinary connected successfully!');
+            console.log('✅ Cloud name:', process.env.CLOUDINARY_CLOUD_NAME);
+        })
+        .catch(err => {
+            console.error('❌ Cloudinary connection failed!');
+            console.error('Error:', err.message);
+            console.error('Error details:', err);
+        });
 } else {
-    console.warn('⚠️  Cloudinary credentials not set. Please check environment variables.');
+    console.error('⚠️  Cloudinary credentials MISSING!');
+    console.error('Please set these environment variables in Koyeb:');
+    console.error('- CLOUDINARY_CLOUD_NAME');
+    console.error('- CLOUDINARY_API_KEY');
+    console.error('- CLOUDINARY_API_SECRET');
 }
 
 // Multer dengan memory storage
@@ -43,8 +61,13 @@ async function uploadToCloudinary(fileBuffer, filename) {
     return new Promise((resolve, reject) => {
         // Validasi credentials
         if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
-            return reject(new Error('Cloudinary credentials tidak tersedia. Periksa environment variables.'));
+            console.error('❌ Upload failed: Cloudinary credentials tidak tersedia');
+            return reject(new Error('Cloudinary credentials tidak tersedia. Periksa environment variables di Koyeb.'));
         }
+
+        console.log('📤 Uploading to Cloudinary...');
+        console.log('   Cloud:', process.env.CLOUDINARY_CLOUD_NAME);
+        console.log('   File:', filename);
 
         const uniqueFilename = `${Date.now()}-${filename.split('.')[0]}`;
         
@@ -60,7 +83,8 @@ async function uploadToCloudinary(fileBuffer, filename) {
                     console.error('❌ Cloudinary upload error:', error);
                     reject(error);
                 } else {
-                    console.log('✅ Upload success:', result.secure_url);
+                    console.log('✅ Upload success!');
+                    console.log('   URL:', result.secure_url);
                     resolve(result);
                 }
             }
