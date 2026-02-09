@@ -1,33 +1,5 @@
 const db = require('../config/database');
-const multer = require('multer');
-const path = require('path');
-
-// Konfigurasi multer untuk upload gambar
-const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        cb(null, 'public/images/products/');
-    },
-    filename: function (req, file, cb) {
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        cb(null, uniqueSuffix + path.extname(file.originalname));
-    }
-});
-
-const upload = multer({ 
-    storage: storage,
-    limits: { fileSize: 2 * 1024 * 1024 }, // 2MB
-    fileFilter: function (req, file, cb) {
-        const filetypes = /jpeg|jpg|png|gif/;
-        const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
-        const mimetype = filetypes.test(file.mimetype);
-        
-        if (mimetype && extname) {
-            return cb(null, true);
-        } else {
-            cb('Error: Hanya file gambar yang diperbolehkan!');
-        }
-    }
-});
+const { cloudinary, upload } = require('../config/cloudinary');
 
 exports.upload = upload;
 
@@ -55,7 +27,8 @@ exports.index = async (req, res) => {
 exports.addSnack = async (req, res) => {
     try {
         const { nama_snack, harga, stok } = req.body;
-        const gambar = req.file ? '/images/products/' + req.file.filename : null;
+        // Cloudinary mengembalikan URL lengkap di req.file.path
+        const gambar = req.file ? req.file.path : null;
 
         await db.query(
             'INSERT INTO Snack (nama_snack, harga, stok, gambar) VALUES (?, ?, ?, ?)',
@@ -76,15 +49,18 @@ exports.updateSnack = async (req, res) => {
 
         // Jika ada gambar baru diupload
         if (req.file) {
-            gambar = '/images/products/' + req.file.filename;
+            gambar = req.file.path; // URL dari Cloudinary
             
-            // Hapus gambar lama jika ada
-            if (gambar_lama && gambar_lama !== '') {
-                const fs = require('fs');
-                const path = require('path');
-                const oldImagePath = path.join(__dirname, '..', 'public', gambar_lama);
-                if (fs.existsSync(oldImagePath)) {
-                    fs.unlinkSync(oldImagePath);
+            // Hapus gambar lama dari Cloudinary jika ada
+            if (gambar_lama && gambar_lama.includes('cloudinary')) {
+                try {
+                    // Extract public_id dari URL Cloudinary
+                    const urlParts = gambar_lama.split('/');
+                    const filename = urlParts[urlParts.length - 1];
+                    const publicId = 'warung-kasir/products/' + filename.split('.')[0];
+                    await cloudinary.uploader.destroy(publicId);
+                } catch (err) {
+                    console.error('Error deleting old image:', err);
                 }
             }
         }
@@ -123,14 +99,16 @@ exports.deleteSnack = async (req, res) => {
             });
         }
 
-        // Hapus gambar jika ada
+        // Hapus gambar dari Cloudinary jika ada
         const [snack] = await connection.query('SELECT gambar FROM Snack WHERE id_snack = ?', [id_snack]);
-        if (snack.length > 0 && snack[0].gambar) {
-            const fs = require('fs');
-            const path = require('path');
-            const imagePath = path.join(__dirname, '..', 'public', snack[0].gambar);
-            if (fs.existsSync(imagePath)) {
-                fs.unlinkSync(imagePath);
+        if (snack.length > 0 && snack[0].gambar && snack[0].gambar.includes('cloudinary')) {
+            try {
+                const urlParts = snack[0].gambar.split('/');
+                const filename = urlParts[urlParts.length - 1];
+                const publicId = 'warung-kasir/products/' + filename.split('.')[0];
+                await cloudinary.uploader.destroy(publicId);
+            } catch (err) {
+                console.error('Error deleting image from Cloudinary:', err);
             }
         }
 
