@@ -16,7 +16,6 @@ function editSnack(id, nama, harga, stok, gambar) {
     document.getElementById('edit_stok').value = stok;
     document.getElementById('edit_gambar_lama').value = gambar;
     
-    // Preview gambar
     const previewImg = document.getElementById('preview_gambar');
     const noGambar = document.getElementById('no_gambar');
     
@@ -37,7 +36,7 @@ function closeEditModal() {
     document.getElementById('editModal').style.display = 'none';
 }
 
-// Fungsi untuk update snack
+// Fungsi untuk update snack - FINAL VERSION
 async function updateSnack() {
     const formData = new FormData();
     formData.append('id_snack', document.getElementById('edit_id_snack').value);
@@ -48,36 +47,78 @@ async function updateSnack() {
     
     const fileInput = document.getElementById('edit_gambar');
     if (fileInput.files.length > 0) {
-        formData.append('gambar', fileInput.files[0]);
+        const file = fileInput.files[0];
+        
+        // Validasi ukuran
+        if (file.size > 2 * 1024 * 1024) {
+            alert('❌ File terlalu besar! Maksimal 2MB');
+            return;
+        }
+        
+        // Validasi tipe
+        const allowed = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+        if (!allowed.includes(file.type)) {
+            alert('❌ Format file tidak didukung! Gunakan JPG, PNG, atau GIF');
+            return;
+        }
+        
+        formData.append('gambar', file);
+        console.log('📷 Uploading:', file.name, '-', (file.size / 1024).toFixed(2), 'KB');
     }
 
     try {
+        console.log('🔄 Sending request...');
+        
         const response = await fetch('/stok/update', {
             method: 'POST',
             body: formData
         });
 
+        console.log('📡 Response status:', response.status, response.statusText);
+
+        // Cek content type
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            const text = await response.text();
+            console.error('❌ Response is not JSON!');
+            console.error('Content-Type:', contentType);
+            console.error('Response body:', text.substring(0, 300));
+            throw new Error('Server tidak mengembalikan JSON. Kemungkinan ada error di backend.');
+        }
+
         const result = await response.json();
+        console.log('📦 Response data:', result);
 
         if (result.success) {
-            alert('Data berhasil diupdate');
+            alert('✅ Data berhasil diupdate!');
             location.reload();
         } else {
-            alert(result.message);
+            alert('❌ Gagal update: ' + (result.message || 'Unknown error'));
         }
     } catch (error) {
-        console.error('Error:', error);
-        alert('Terjadi kesalahan');
+        console.error('❌ Error caught:', error);
+        
+        let errorMsg = 'Terjadi kesalahan saat update data.\n\n';
+        errorMsg += 'Error: ' + error.message + '\n\n';
+        errorMsg += 'Silakan:\n';
+        errorMsg += '1. Cek Console (F12) untuk detail\n';
+        errorMsg += '2. Pastikan gambar < 2MB\n';
+        errorMsg += '3. Pastikan format JPG/PNG/GIF\n';
+        errorMsg += '4. Cek koneksi internet\n';
+        
+        alert(errorMsg);
     }
 }
 
 // Fungsi untuk hapus snack
 async function deleteSnack(id) {
-    if (!confirm('Yakin ingin menghapus snack ini?')) {
+    if (!confirm('⚠️ Yakin ingin menghapus snack ini?')) {
         return;
     }
 
     try {
+        console.log('🗑️ Deleting snack ID:', id);
+        
         const response = await fetch('/stok/delete', {
             method: 'POST',
             headers: {
@@ -89,14 +130,14 @@ async function deleteSnack(id) {
         const result = await response.json();
 
         if (result.success) {
-            alert('Data berhasil dihapus');
+            alert('✅ Data berhasil dihapus!');
             location.reload();
         } else {
-            alert(result.message);
+            alert('❌ ' + result.message);
         }
     } catch (error) {
-        console.error('Error:', error);
-        alert('Terjadi kesalahan');
+        console.error('❌ Error:', error);
+        alert('Terjadi kesalahan saat menghapus data.');
     }
 }
 
@@ -115,31 +156,26 @@ window.onclick = function(event) {
 
 // Variabel untuk tracking sort direction
 let sortDirections = {
-    0: 'asc',  // ID
-    3: 'asc',  // Harga
-    4: 'asc'   // Stok
+    0: 'asc',
+    3: 'asc',
+    4: 'asc'
 };
 
 // Fungsi untuk sort tabel
 function sortTable(columnIndex) {
     const table = document.querySelector('.data-table tbody');
     const rows = Array.from(table.getElementsByTagName('tr'));
-    
-    // Filter rows yang bukan "Belum ada data"
     const dataRows = rows.filter(row => row.cells.length > 1);
     
     if (dataRows.length === 0) return;
     
-    // Toggle sort direction
     const currentDirection = sortDirections[columnIndex];
     const newDirection = currentDirection === 'asc' ? 'desc' : 'asc';
     sortDirections[columnIndex] = newDirection;
     
-    // Update icon
     document.getElementById(`sort-icon-${columnIndex}`).textContent = 
         newDirection === 'asc' ? '↑' : '↓';
     
-    // Reset icon kolom lain
     Object.keys(sortDirections).forEach(key => {
         if (parseInt(key) !== columnIndex) {
             document.getElementById(`sort-icon-${key}`).textContent = '↕️';
@@ -147,20 +183,16 @@ function sortTable(columnIndex) {
         }
     });
     
-    // Sort rows
     dataRows.sort((a, b) => {
         let aValue, bValue;
         
         if (columnIndex === 0) {
-            // ID - sort as number
             aValue = parseInt(a.cells[columnIndex].textContent);
             bValue = parseInt(b.cells[columnIndex].textContent);
         } else if (columnIndex === 3) {
-            // Harga - hapus "Rp" dan titik, convert ke number
             aValue = parseInt(a.cells[columnIndex].textContent.replace(/[Rp.\s]/g, ''));
             bValue = parseInt(b.cells[columnIndex].textContent.replace(/[Rp.\s]/g, ''));
         } else if (columnIndex === 4) {
-            // Stok - sort as number
             aValue = parseInt(a.cells[columnIndex].textContent);
             bValue = parseInt(b.cells[columnIndex].textContent);
         }
@@ -172,7 +204,6 @@ function sortTable(columnIndex) {
         }
     });
     
-    // Re-append sorted rows
     dataRows.forEach(row => table.appendChild(row));
 }
 
@@ -186,7 +217,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const rows = table.getElementsByTagName('tr');
 
             for (let i = 0; i < rows.length; i++) {
-                const nameCell = rows[i].getElementsByTagName('td')[2]; // Kolom nama snack
+                const nameCell = rows[i].getElementsByTagName('td')[2];
                 if (nameCell) {
                     const textValue = nameCell.textContent || nameCell.innerText;
                     if (textValue.toLowerCase().indexOf(filter) > -1) {
@@ -198,4 +229,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
+    
+    console.log('✅ Stok page loaded');
 });
