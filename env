@@ -1,0 +1,18 @@
+# Database Configuration (untuk local development)
+DB_HOST=localhost
+DB_USER=root
+DB_PASSWORD=
+DB_NAME=warung_kasir
+DB_PORT=3306
+
+# Session Secret (WAJIB DIISI!)
+SESSION_SECRET=warung-kasir-local-dev-secret-key-12345
+
+# Cloudinary Configuration (OPTIONAL - bisa dikosongkan dulu untuk testing)
+# Kalau mau upload gambar baru, pakai credentials dari Koyeb:
+CLOUDINARY_CLOUD_NAME=dgztll8ye
+CLOUDINARY_API_KEY=657192369513214
+CLOUDINARY_API_SECRET=LMO07PodpeuC6oZuN8cWdfEUf90
+
+# Port
+PORT=3000
